@@ -1,0 +1,105 @@
+import tkinter as tk
+from tkinter import ttk, simpledialog, messagebox
+import time
+
+class PomodoroTimer:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Pomodoro Timer")
+
+        self.work_duration = 25 * 60
+        self.break_duration = 5 * 60
+        self.remaining_time = self.work_duration
+        self.is_running = False
+
+        self.style = ttk.Style()
+        self.style.configure("Timer.TLabel", font=("Helvetica", 40), padding=(10, 10))
+        self.style.configure("Button.TButton", font=("Helvetica", 12), padding=(10, 5))
+
+        # Labels Required For The Clock
+        self.label = ttk.Label(root, text="Pomodoro Timer", style="Timer.TLabel")
+        self.label.pack(pady=10)
+
+        self.timer_label = ttk.Label(root, text=self.format_time(self.remaining_time), style="Timer.TLabel")
+        self.timer_label.pack()
+
+        # Buttons Required For The Clocl
+        self.start_button = ttk.Button(root, text="Start", command=self.start_timer, style="Button.TButton")
+        self.start_button.pack(side=tk.LEFT, padx=10)
+
+        self.pause_button = ttk.Button(root, text="Pause", command=self.pause_timer, state=tk.DISABLED, style="Button.TButton")
+        self.pause_button.pack(side=tk.LEFT, padx=10)
+
+        self.reset_button = ttk.Button(root, text="Reset", command=self.reset_timer, state=tk.DISABLED, style="Button.TButton")
+        self.reset_button.pack(side=tk.LEFT, padx=10)
+
+        self.work_button = ttk.Button(root, text="Set Work Duration", command=self.set_work_duration, style="Button.TButton")
+        self.work_button.pack(side=tk.LEFT, padx=10)
+
+        self.break_button = ttk.Button(root, text="Set Break Duration", command=self.set_break_duration, style="Button.TButton")
+        self.break_button.pack(side=tk.LEFT, padx=10)
+
+    def start_timer(self):
+        if not self.is_running:
+            self.is_running = True
+            self.update_timer()
+            self.start_button.config(state=tk.DISABLED)
+            self.pause_button.config(state=tk.NORMAL)
+            self.reset_button.config(state=tk.NORMAL)
+
+    def pause_timer(self):
+        if self.is_running:
+            self.is_running = False
+            self.start_button.config(state=tk.NORMAL)
+            self.pause_button.config(state=tk.DISABLED)
+
+    def reset_timer(self):
+        self.is_running = False
+        self.remaining_time = self.work_duration
+        self.update_timer()
+        self.start_button.config(state=tk.NORMAL)
+        self.pause_button.config(state=tk.DISABLED)
+        self.reset_button.config(state=tk.DISABLED)
+
+    def set_work_duration(self):
+        new_duration = self.get_user_input("Set Work Duration", "Enter work duration in minutes:")
+        if new_duration is not None:
+            self.work_duration = int(new_duration) * 60
+            self.reset_timer()
+
+    def set_break_duration(self):
+        new_duration = self.get_user_input("Set Break Duration", "Enter break duration in minutes:")
+        if new_duration is not None:
+            self.break_duration = int(new_duration) * 60
+            self.reset_timer()
+
+    def update_timer(self):
+        if self.is_running:
+            self.remaining_time -= 1
+            self.timer_label.config(text=self.format_time(self.remaining_time))
+
+            if self.remaining_time == 0:
+                self.is_running = False
+                self.show_message("Pomodoro Completed!", "Time to take a break!")
+                self.remaining_time = self.break_duration
+                self.start_button.config(state=tk.NORMAL)
+                self.pause_button.config(state=tk.DISABLED)
+                self.reset_button.config(state=tk.DISABLED)
+
+        self.root.after(1000, self.update_timer)
+
+    def format_time(self, seconds):
+        minutes, seconds = divmod(seconds, 60)
+        return f"{minutes:02d}:{seconds:02d}"
+
+    def get_user_input(self, title, prompt):
+        result = simpledialog.askstring(title, prompt)
+        return result
+
+    def show_message(self, title, message):
+        messagebox.showinfo(title, message)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    timer = PomodoroTimer(root)
+    root.mainloop()
